@@ -117,15 +117,15 @@
    "</A>"
    "</doc>"))
 
-(defparameter *dom-builder* (cxml-dom:make-dom-builder))
-(defparameter *document-element* #'dom:document-element)
+(defparameter *dom-builder* (fxml-dom:make-dom-builder))
+(defparameter *document-element* #'fxml.dom:document-element)
 
 (defmacro define-xpath-test (name &body body)
   `(deftest ,name
-     (let ((*sample-xml* (cxml:parse-rod *sample-xml* *dom-builder*))
-           (*sample-xml-2* (cxml:parse-rod *sample-xml-2* *dom-builder*))
-           (*sample-xml-3* (cxml:parse-rod *sample-xml-3* *dom-builder*))
-           (*sample-xml-4* (cxml:parse-rod *sample-xml-4* *dom-builder*)))
+     (let ((*sample-xml* (fxml:parse-rod *sample-xml* *dom-builder*))
+           (*sample-xml-2* (fxml:parse-rod *sample-xml-2* *dom-builder*))
+           (*sample-xml-3* (fxml:parse-rod *sample-xml-3* *dom-builder*))
+           (*sample-xml-4* (fxml:parse-rod *sample-xml-4* *dom-builder*)))
        ,@body)))
 
 (defun join-xpath-result (result)
@@ -137,7 +137,7 @@
   (make-node-set
    (xpath-protocol:child-pipe
     (funcall *document-element*
-             (cxml:parse-rod (format nil "<div>~a</div>" xml)
+             (fxml:parse-rod (format nil "<div>~a</div>" xml)
                              *dom-builder*)))))
 
 (define-xpath-test test-values
@@ -480,10 +480,10 @@
 (define-xpath-test test-following
   (xpath:with-namespaces (("" ""))
     (assert-equal* 0 (xpath:evaluate "count(html/following::text())"
-                                     (cxml:parse-rod "<html></html>"
+                                     (fxml:parse-rod "<html></html>"
                                                      *dom-builder*))
                    11.0d0 (xpath:evaluate "count(//following::div) * 10 + count(//div|body/div)"
-                                          (cxml:parse-rod
+                                          (fxml:parse-rod
                                            "<html><body><span></span><br/><div></div></body></html>"
                                            *dom-builder*)))))
 
@@ -614,20 +614,20 @@
     (check nil "*" "//span/@class")))
 
 (deftest test-xmls
-  (let ((*navigator* (cxml-xmls:make-xpath-navigator))
+  (let ((*navigator* (fxml.xmls:make-xpath-navigator))
         (d
-         '("foo" (("a" "b"))
-           " "
-           ("a" (("id" "1")))
-           " " ("b" (("id" "2")))
-           " " ("c" (("id" "3")))
-           " " ("a" (("id" "4")))
-           " " ("b" (("id" "5")))
-           " " ("c" (("id" "6")))
-           " " ("a" (("id" "7")))
-           " " ("b" (("id" "8")))
-           " " ("c" (("id" "9")))
-           " " ("last" NIL))))
+          '("foo" (("a" "b"))
+            " "
+            ("a" (("id" "1")))
+            " " ("b" (("id" "2")))
+            " " ("c" (("id" "3")))
+            " " ("a" (("id" "4")))
+            " " ("b" (("id" "5")))
+            " " ("c" (("id" "6")))
+            " " ("a" (("id" "7")))
+            " " ("b" (("id" "8")))
+            " " ("c" (("id" "9")))
+            " " ("last" NIL))))
     (assert-equal
      '(("a" (("id" "1"))) ("c" (("id" "6"))))
      (all-nodes (evaluate "//c[position()=2]|//a[@id='1']" d)))))

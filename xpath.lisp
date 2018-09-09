@@ -117,7 +117,7 @@
 
 (defun decode-qname (qname environment attributep)
   (multiple-value-bind (prefix local-name)
-      (cxml::split-qname qname)
+      (fxml:split-qname qname)
     (values local-name (find-namespace prefix environment attributep))))
 
 (defun find-namespace (prefix environment attributep)

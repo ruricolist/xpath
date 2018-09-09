@@ -126,7 +126,7 @@
 
 (defun decode-dynamic-qname (qname)
   (multiple-value-bind (prefix local-name)
-      (cxml::split-qname qname)
+      (fxml:split-qname qname)
     (values local-name (find-dynamic-namespace prefix))))
 
 (defun find-dynamic-namespace (prefix)

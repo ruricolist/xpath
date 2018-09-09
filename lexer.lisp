@@ -182,11 +182,11 @@
 
 (defun namep (str)
   (and (not (zerop (length str)))
-       (cxml::name-start-rune-p (elt str 0))
-       (every #'cxml::name-rune-p str)))
+       (fxml:name-start-rune-p (elt str 0))
+       (every #'fxml:name-rune-p str)))
 
 (defun nc-name-p (str)
-  (and (namep str) (cxml::nc-name-p str)))
+  (and (namep str) (fxml:nc-name-p str)))
 
 (deflexer xpath-lexer
   ("\\(" () :lparen)

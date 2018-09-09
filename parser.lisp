@@ -265,5 +265,5 @@
              (xpath-error "invalid XPath syntax: ~A in: ~A" c str)))))
     (yacc:parse-with-lexer (make-fixup-lexer
                             (xpath-lexer
-                             (coerce str 'runes:simple-rod)))
+                             (coerce str 'fxml.runes:simple-rod)))
                            *xpath-parser*)))

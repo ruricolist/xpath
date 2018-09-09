@@ -103,62 +103,62 @@
 
 ;; DOM mapping: simple slots
 
-(define-default-method xpath-protocol:node-p ((node dom:node)) t)
+(define-default-method xpath-protocol:node-p ((node fxml.dom:node)) t)
 
-(define-default-method xpath-protocol:parent-node ((node dom:attr))
-  (dom:owner-element node))
+(define-default-method xpath-protocol:parent-node ((node fxml.dom:attr))
+  (fxml.dom:owner-element node))
 
-(define-default-method xpath-protocol:parent-node ((node dom:node))
-  (dom:parent-node node))
+(define-default-method xpath-protocol:parent-node ((node fxml.dom:node))
+  (fxml.dom:parent-node node))
 
-(define-default-method xpath-protocol:local-name ((node dom:node))
+(define-default-method xpath-protocol:local-name ((node fxml.dom:node))
   ;; fixme?
-  (or (dom:local-name node) (dom:node-name node)))
+  (or (fxml.dom:local-name node) (fxml.dom:node-name node)))
 
-(define-default-method xpath-protocol:namespace-prefix ((node dom:node))
-  (dom:prefix node))
+(define-default-method xpath-protocol:namespace-prefix ((node fxml.dom:node))
+  (fxml.dom:prefix node))
 
-(define-default-method xpath-protocol:namespace-uri ((node dom:node))
-  (or (dom:namespace-uri node) ""))
+(define-default-method xpath-protocol:namespace-uri ((node fxml.dom:node))
+  (or (fxml.dom:namespace-uri node) ""))
 
-(define-default-method xpath-protocol:qualified-name ((node dom:node))
-  (dom:node-name node))
+(define-default-method xpath-protocol:qualified-name ((node fxml.dom:node))
+  (fxml.dom:node-name node))
 
 (define-default-method xpath-protocol:processing-instruction-target
-    ((node dom:node))
-  (dom:node-value node))
+    ((node fxml.dom:node))
+  (fxml.dom:node-value node))
 
-(define-default-method xpath-protocol:base-uri ((node dom:node))
+(define-default-method xpath-protocol:base-uri ((node fxml.dom:node))
   ;; fixme
   "")
 
 
 ;; DOM mapping: pipes
 
-(define-default-method xpath-protocol:parent-node ((node dom:node))
-  (dom:parent-node node))
+(define-default-method xpath-protocol:parent-node ((node fxml.dom:node))
+  (fxml.dom:parent-node node))
 
-(define-default-method xpath-protocol:child-pipe ((node dom:node))
+(define-default-method xpath-protocol:child-pipe ((node fxml.dom:node))
   empty-pipe)
 
-(define-default-method xpath-protocol:child-pipe ((node dom:document))
-  (list (dom:document-element node)))
+(define-default-method xpath-protocol:child-pipe ((node fxml.dom:document))
+  (list (fxml.dom:document-element node)))
 
-(define-default-method xpath-protocol:child-pipe ((node dom:element))
-  (vector->pipe (dom:child-nodes node)))
+(define-default-method xpath-protocol:child-pipe ((node fxml.dom:element))
+  (vector->pipe (fxml.dom:child-nodes node)))
 
-(define-default-method xpath-protocol:attribute-pipe ((node dom:node))
+(define-default-method xpath-protocol:attribute-pipe ((node fxml.dom:node))
   empty-pipe)
 
-(define-default-method xpath-protocol:attribute-pipe ((node dom:element))
+(define-default-method xpath-protocol:attribute-pipe ((node fxml.dom:element))
   (filter-pipe #'(lambda (item)
-                   (not (equal (dom:namespace-uri item)
+                   (not (equal (fxml.dom:namespace-uri item)
                                "http://www.w3.org/2000/xmlns/")))
-               (vector->pipe (dom:items (dom:attributes node)))))
+               (vector->pipe (fxml.dom:items (fxml.dom:attributes node)))))
 
-(define-default-method xpath-protocol:namespace-pipe ((node dom:node))
-  (when (dom:parent-node node)
-    (xpath-protocol:namespace-pipe (dom:parent-node node))))
+(define-default-method xpath-protocol:namespace-pipe ((node fxml.dom:node))
+  (when (fxml.dom:parent-node node)
+    (xpath-protocol:namespace-pipe (fxml.dom:parent-node node))))
 
 (defstruct (dom-namespace
              (:constructor make-dom-namespace (parent prefix uri)))
@@ -199,7 +199,7 @@
 (define-default-method xpath-protocol:namespace-uri ((node dom-namespace))
   "")
 
-(define-default-method xpath-protocol:namespace-pipe ((node dom:element))
+(define-default-method xpath-protocol:namespace-pipe ((node fxml.dom:element))
   ;; FIXME: completely untested
   ;; FIXME: rewrite this lazily?
   (let ((table (make-hash-table :test 'equal))
@@ -211,24 +211,24 @@
                        (make-dom-namespace parent prefix uri))))
              (record (parent node)
                (record* parent
-                        (or (dom:prefix node) "")
-                        (dom:namespace-uri node)))
+                        (or (fxml.dom:prefix node) "")
+                        (fxml.dom:namespace-uri node)))
              (recurse (node)
                (record node node)
-               (dolist (attribute (dom:items (dom:attributes node)))
+               (dolist (attribute (fxml.dom:items (fxml.dom:attributes node)))
                  (cond
-                   ((equal (dom:namespace-uri attribute)
+                   ((equal (fxml.dom:namespace-uri attribute)
                            "http://www.w3.org/2000/xmlns/")
                     ;; record explicitly declared namespaces, which might
                     ;; not be in use anywhere
                     (record* node
-                             (dom:local-name attribute)
-                             (dom:value attribute)))
-                   ((plusp (length (dom:prefix attribute)))
+                             (fxml.dom:local-name attribute)
+                             (fxml.dom:value attribute)))
+                   ((plusp (length (fxml.dom:prefix attribute)))
                     ;; record namespaces from DOM 2 slots, which might not
                     ;; be declared in an attribute
                     (record node attribute))))
-               (let ((parent (dom:parent-node node)))
+               (let ((parent (fxml.dom:parent-node node)))
                  (when parent
                    (recurse parent)))))
       (record* nil "xml" "http://www.w3.org/XML/1998/namespace")
@@ -239,21 +239,21 @@
              table)
     result))
 
-(define-default-method xpath-protocol:node-text ((node dom:node))
+(define-default-method xpath-protocol:node-text ((node fxml.dom:node))
   ;; FIXME: support document and document-fragment
   (with-output-to-string (s)
     (labels ((write-text (node)
-               (let ((value (dom:node-value node)))
+               (let ((value (fxml.dom:node-value node)))
                  (when value (write-string value s))
-                 (unless (dom:attribute-p node) ;; FIXME: verify CDATA sections
-                   (dom:do-node-list (child (dom:child-nodes node))
-                     (cond ((or (dom:element-p child)
-                                (dom:entity-reference-p child))
+                 (unless (fxml.dom:attribute-p node) ;; FIXME: verify CDATA sections
+                   (fxml.dom:do-node-list (child (fxml.dom:child-nodes node))
+                     (cond ((or (fxml.dom:element-p child)
+                                (fxml.dom:entity-reference-p child))
                             (write-text child))
-                           ((or (dom:text-node-p child)
-                                (dom:attribute-p child)
-                                (dom:cdata-section-p child))
-                            (write-string (dom:node-value child) s))))))))
+                           ((or (fxml.dom:text-node-p child)
+                                (fxml.dom:attribute-p child)
+                                (fxml.dom:cdata-section-p child))
+                            (write-string (fxml.dom:node-value child) s))))))))
       (write-text node))))
 
 (define-default-method xpath-protocol:node-text ((node dom-namespace))
@@ -261,16 +261,16 @@
 
 ;; currently computed from child-pipe
 ;;; (defmethod preceding-sibling-pipe ()
-;;;   (let ((parent (dom:parent-node node)))
+;;;   (let ((parent (fxml.dom:parent-node node)))
 ;;;     (if parent
-;;;     (let* ((children (dom:child-nodes parent))
+;;;     (let* ((children (fxml.dom:child-nodes parent))
 ;;;            (pos (position node children)))
 ;;;       (loop
 ;;;          for i from (1- pos) downto 0
 ;;;          collect (elt children i)))
 ;;;     empty-pipe)))
 
-(define-default-method xpath-protocol:node-type-p ((node dom:node) type)
+(define-default-method xpath-protocol:node-type-p ((node fxml.dom:node) type)
   (declare (ignore type))
   nil)
 
@@ -282,44 +282,44 @@
              `(define-default-method xpath-protocol:node-type-p
                   ((node ,class) (type (eql ,keyword)))
                 t)))
-  (deftypemapping dom:comment :comment)
-  (deftypemapping dom:processing-instruction :processing-instruction)
-  (deftypemapping dom:text :text)
-  (deftypemapping dom:attr :attribute)
-  (deftypemapping dom:element :element)
+  (deftypemapping fxml.dom:comment :comment)
+  (deftypemapping fxml.dom:processing-instruction :processing-instruction)
+  (deftypemapping fxml.dom:text :text)
+  (deftypemapping fxml.dom:attr :attribute)
+  (deftypemapping fxml.dom:element :element)
   (deftypemapping dom-namespace :namespace)
-  (deftypemapping dom:document :document))
+  (deftypemapping fxml.dom:document :document))
 
-(define-default-method xpath-protocol:get-element-by-id ((node dom:node) id)
-  (dom:get-element-by-id
-   (if (dom:document-p node) node (dom:owner-document node)) id))
+(define-default-method xpath-protocol:get-element-by-id ((node fxml.dom:node) id)
+  (fxml.dom:get-element-by-id
+   (if (fxml.dom:document-p node) node (fxml.dom:owner-document node)) id))
 
 (define-default-method xpath-protocol:unparsed-entity-uri
-    ((node dom:node) name)
-  (let ((dtd (rune-dom::dtd (if (dom:document-p node)
-				node
-				(dom:owner-document node)))))
+    ((node fxml.dom:node) name)
+  (let ((dtd (fxml.rune-dom::dtd (if (fxml.dom:document-p node)
+                                     node
+                                     (fxml.dom:owner-document node)))))
     (when dtd
-      (let ((entdef (cdr (gethash name (cxml::dtd-gentities dtd)))))
-	(when (typep entdef 'cxml::external-entdef)
-	  (let ((uri (cxml::extid-system (cxml::entdef-extid entdef))))
+      (let ((entdef (cdr (gethash name (fxml::dtd-gentities dtd)))))
+	(when (typep entdef 'fxml::external-entdef)
+	  (let ((uri (fxml::extid-system (fxml::entdef-extid entdef))))
 	    (when uri
-	      (puri:render-uri uri nil))))))))
+              (quri:render-uri uri nil))))))))
 
 ;; Character data
 
 (define-default-method xpath-protocol:local-name
-    ((node dom:character-data))
+    ((node fxml.dom:character-data))
   "")
 
 (define-default-method xpath-protocol:namespace-prefix
-    ((node dom:character-data))
+    ((node fxml.dom:character-data))
   "")
 
 (define-default-method xpath-protocol:namespace-uri
-    ((node dom:character-data))
+    ((node fxml.dom:character-data))
   "")
 
 (define-default-method xpath-protocol:qualified-name
-    ((node dom:character-data))
+    ((node fxml.dom:character-data))
   "")
